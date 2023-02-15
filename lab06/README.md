@@ -156,10 +156,11 @@ Using the function `stringr::str_extract_all()` applied on
 Write a regular expression that captures all such instances
 
 ``` r
-institution <- str_extract_all(
+institution <- stringr::str_extract_all(
   publications_txt,
-  "[YOUR REGULAR EXPRESSION HERE]"
-  ) 
+  "University of\\s+[[:alnum:]-_\\s+]+|[[:alnum:]-_\\s+]+\\s+Institute\\s+of[[:alnum:]-_\\s+]+"
+  )
+
 institution <- unlist(institution)
 as.data.frame(table(institution))
 ```
@@ -173,9 +174,9 @@ the form of
 And tabulate the results
 
 ``` r
-schools_and_deps <- str_extract_all(
-  abstracts_txt,
-  "[YOUR REGULAR EXPRESSION HERE]"
+schools_and_deps <- stringr::str_extract_all(
+  publications_txt,
+  "School\\s+of\\s+[[:alnum:]-_\\s]+|Department\\s+of\\s+[[:alnum:]-_\\s]+"
   )
 as.data.frame(table(schools_and_deps))
 ```
