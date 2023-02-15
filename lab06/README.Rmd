@@ -69,7 +69,7 @@ Use the function `httr::GET()` to make the following query:
 
 The parameters passed to the query are documented [here](https://www.ncbi.nlm.nih.gov/books/NBK25499/).
 
-```{r papers-covid-hawaii, eval=FALSE}
+```{r papers-covid-hawaii}
 library(httr)
 query_ids <- GET(
   url   = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
@@ -95,7 +95,7 @@ The Ids are wrapped around text in the following way: `<Id>... id number ...</Id
 we can use a regular expression that extract that information. Fill out the
 following lines of code:
 
-```{r get-ids, eval = FALSE}
+```{r get-ids}
 # Turn the result into a character vector
 ids <- as.character(ids)
 
@@ -119,7 +119,7 @@ before, we will need to coerce the contents (results) to a list using:
     
 **Pro-tip**: If you want `GET()` to take some element literal, wrap it around `I()` (as you would do in a formula in R). For example, the text `"123,456"` is replaced with `"123%2C456"`. If you don't want that behavior, you would need to do the following `I("123,456")`.
     
-```{r get-abstracts, eval = FALSE}
+```{r get-abstracts}
 publications <- GET(
   url   = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
   query = list(
@@ -146,7 +146,7 @@ Using the function `stringr::str_extract_all()` applied on `publications_txt`, c
 
 Write a regular expression that captures all such instances
 
-```{r univ-institute-regex, eval = FALSE}
+```{r univ-institute-regex}
 institution <- stringr::str_extract_all(
   publications_txt,
   "University of\\s+[[:alnum:]-_\\s+]+|[[:alnum:]-_\\s+]+\\s+Institute\\s+of[[:alnum:]-_\\s+]+"
@@ -163,7 +163,7 @@ Repeat the exercise and this time focus on schools and departments in the form o
 
 And tabulate the results
 
-```{r school-department, eval = FALSE}
+```{r school-department}
 schools_and_deps <- stringr::str_extract_all(
   publications_txt,
   "School\\s+of\\s+[[:alnum:]-_\\s]+|Department\\s+of\\s+[[:alnum:]-_\\s]+"
@@ -182,7 +182,7 @@ the XML a bit. We will use the `xml2::xml_children()` function to keep one eleme
 per id. This way, if a paper is missing the abstract, or something else, we will be able to properly match PUBMED IDS with their corresponding records.
 
 
-```{r one-string-per-response, eval = FALSE}
+```{r one-string-per-response}
 pub_char_list <- xml2::xml_children(publications)
 pub_char_list <- sapply(pub_char_list, as.character)
 ```
@@ -191,33 +191,35 @@ Now, extract the abstract and article title for each one of the elements of
 `pub_char_list`. You can either use `sapply()` as we just did, or simply
 take advantage of vectorization of `stringr::str_extract`
 
-```{r extracting-last-bit, eval = FALSE}
-abstracts <- str_extract(pub_char_list, "[YOUR REGULAR EXPRESSION]")
-abstracts <- str_remove_all(abstracts, "[CLEAN ALL THE HTML TAGS]")
-abstracts <- str_remove_all(abstracts, "[CLEAN ALL EXTRA WHITE SPACE AND NEW LINES]")
+```{r extracting-last-bit}
+abstracts <- stringr::str_extract(pub_char_list, "<Abstract[.]*>(\\n|.)+</Abstract>")
+abstracts <- stringr::str_remove_all(abstracts, "<Abstract[.]*>|</Abstract>")
+abstracts <- stringr::str_replace_all(abstracts, "\\s+", " ")
+sum(is.na(abstracts))
 ```
 
   - How many of these don't have an abstract? 
 
-_Answer here._
+53 of these don't have an abstract.
 
 Now, the title
 
-```{r process-titles, eval = FALSE}
-titles <- str_extract(pub_char_list, "[YOUR REGULAR EXPRESSION]")
-titles <- str_remove_all(titles, "[CLEAN ALL THE HTML TAGS]")
+```{r process-titles}
+titles <- stringr::str_extract(pub_char_list, "<ArticleTitle>(\\n|.)+</ArticleTitle>")
+titles <- stringr::str_remove_all(titles, "<ArticleTitle[.]*>|</ArticleTitle>")
+sum(is.na(titles))
 ```
 
 - How many of these don't have a title ? 
 
-_Answer here._
+All of them have titles
 
 Finally, put everything together into a single `data.frame` and use
 `knitr::kable` to print the results
 
-```{r build-db, eval = FALSE}
+```{r build-db}
 database <- data.frame(
-  "[DATA TO CONCATENATE]"
+  abstracts, titles
 )
 knitr::kable(database)
 ```
